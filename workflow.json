@@ -1,0 +1,1274 @@
+{
+  "meta": {
+    "instanceId": "instance-id"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "nodeMode": "sender",
+        "dataType": "string",
+        "value1": "={{ $('[OpenAI] Function').item.json[\"choices\"][0][\"message\"][\"function_call\"][\"name\"] }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "questions",
+              "output": 1
+            },
+            {
+              "value2": "update_profile",
+              "output": 2
+            },
+            {
+              "value2": "enrollment_complete",
+              "output": 3
+            }
+          ]
+        }
+      },
+      "id": "abc9d97b-a150-4698-9e38-aa8c4d861b0c",
+      "name": "Switch9000",
+      "type": "n8n-nodes-switch-nine-thousand.switch9000",
+      "typeVersion": 1,
+      "position": [
+        -2040,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e85d1166-8a15-4851-bd93-98369a296a8f",
+      "name": "Respond to Webhook3",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -1220,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $('[OpenAI] Function').first().json;\n\nconst transformed = {\n  \"responseType\": \"text\",\n  \"text\": {\n    \"content\": response.choices[0].message.content\n  },\n  \"usage\": {\n    \"chatCompletion\": [{\n      \"model\": response.model,\n      \"isUserKey\": $('Config').first().json.llm.data.isUserKey,\n      \"promptTokens\": response.usage.prompt_tokens,\n      \"completionTokens\": response.usage.completion_tokens,\n      \"totalTokens\": response.usage.total_tokens,  \n    }]\n  },\n};\n\nreturn transformed"
+      },
+      "id": "fb697047-3b63-4100-9dc6-3e8eb79abc78",
+      "name": "Response: Text Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -1460,
+        -380
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6e08b350-8a33-4277-9d29-d04abab0908c",
+      "name": "Switch90001",
+      "type": "n8n-nodes-switch-nine-thousand.switch9000",
+      "typeVersion": 1,
+      "position": [
+        -1700,
+        -380
+      ]
+    },
+    {
+      "parameters": {
+        "routeIndex": 2
+      },
+      "id": "fccbb96c-ac03-430d-b623-1a061391ee66",
+      "name": "Switch90002",
+      "type": "n8n-nodes-switch-nine-thousand.switch9000",
+      "typeVersion": 1,
+      "position": [
+        -1700,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "routeIndex": 3
+      },
+      "id": "008c8251-6d81-46d8-b4f9-db1fba603a8b",
+      "name": "Switch90003",
+      "type": "n8n-nodes-switch-nine-thousand.switch9000",
+      "typeVersion": 1,
+      "position": [
+        -1700,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "acme/v1/chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "429b18e3-7fdb-4fc2-a1b7-0241af3e7bbf",
+      "name": "Ingress",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -4760,
+        60
+      ],
+      "webhookId": "d49dd70f-8ae9-4642-b0e6-1afae89b5739"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "conversation",
+              "value": "={{ $('Ingress').item.json.body.conversation }}"
+            },
+            {
+              "name": "persona",
+              "value": "={{ $('Ingress').item.json.body.config.services.persona }}"
+            },
+            {
+              "name": "memory",
+              "value": "={{ $('Ingress').item.json.body.config.services.memory }}"
+            },
+            {
+              "name": "memoryLT",
+              "value": "={{ $('Ingress').item.json.body.config.services.memoryLT }}"
+            },
+            {
+              "name": "embedding",
+              "value": "={{ $('Ingress').item.json.body.config.services.embedding }}"
+            },
+            {
+              "name": "llm",
+              "value": "={{ $('Ingress').item.json.body.config.services.llm }}"
+            },
+            {
+              "name": "files",
+              "value": "={{ $('Ingress').item.json.body.config.services.knowledge }}"
+            },
+            {
+              "name": "skill",
+              "value": "={{ $('Ingress').item.json.body.config.services.skill }}"
+            },
+            {
+              "name": "webhook",
+              "value": "={{ $('Ingress').item.json.body.config.services.webhook }}"
+            }
+          ],
+          "boolean": [
+            {
+              "name": "isProduction"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aa551e00-b8c6-40e5-83e9-5a725a1e67ad",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -4500,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').item.json[\"isProduction\"] === false ? \"http://127.0.0.1:5001/your-app/us-central1/getUserProfile\" : \"https://your-app.cloudfunctions.net/getUserProfile\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $('Config').item.json[\"conversation\"][\"userId\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9d6a64ba-6c95-4c5c-87c1-ae2148deae88",
+      "name": "[DJ] Get UserProfile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3120,
+        60
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FCI8QYaKJq8EO4lZ",
+          "name": "Ingress"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e419e0f8-1ca5-47de-9384-d06e5c530ae5",
+      "name": "Respond to Webhook4",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -440,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "b0843008-3dfb-4386-b435-eb7a8698f3b7",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        -80
+      ],
+      "webhookId": "bf3f04e1-90d4-42f2-821d-877176120b75"
+    },
+    {
+      "parameters": {
+        "jsCode": "const transformed = {\n  \"responseType\": \"text\",\n  \"text\": {\n    \"content\": $input.first().json.choices[0].message.content\n  },\n  \"usage\": {\n    \"chatCompletion\": [{\n      \"model\": $input.first().json.model,\n      \"isUserKey\": $('Config').first().json.llm.data.isUserKey,\n      \"promptTokens\": $input.first().json.usage.prompt_tokens,\n      \"completionTokens\": $input.first().json.usage.completion_tokens,\n      \"totalTokens\": $input.first().json.usage.total_tokens,  \n    }]\n  },\n};\n\nreturn transformed"
+      },
+      "id": "0651362c-b1f0-4e12-b9e1-07a79140a1d2",
+      "name": "Response: Text Message5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "routeIndex": 1
+      },
+      "id": "079ea7b2-fdd7-42ad-b5ad-63056c3d6548",
+      "name": "Switch90004",
+      "type": "n8n-nodes-switch-nine-thousand.switch9000",
+      "typeVersion": 1,
+      "position": [
+        -1700,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer your-key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messages",
+              "value": "={{ $input.first().json.messages }}"
+            },
+            {
+              "name": "model",
+              "value": "={{ $('Config').first().json.llm.data.model }}"
+            },
+            {
+              "name": "temperature",
+              "value": "={{ $('Config').first().json.llm.data.temperature }}"
+            },
+            {
+              "name": "frequency_penalty",
+              "value": "={{ $('Config').first().json.llm.data.frequencyPenalty }}"
+            },
+            {
+              "name": "max_tokens",
+              "value": "={{ $('Config').first().json.llm.data.maxTokens }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $('Config').first().json.conversation.userId }}"
+            },
+            {
+              "name": "presence_penalty",
+              "value": "={{ 2 }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "da8ad045-79ce-4f85-8065-5f9356735ee0",
+      "name": "[OpenAI] FAQ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1220,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const args_before = JSON.parse($input.first().json.choices[0].message.content);\n\nconst agentId = $('Config').first().json.conversation.agentId;\nconst userId = $('Config').first().json.conversation.userId;\nconst sessionId = $('Config').first().json.conversation.sessionId;\n\nconst args_after = {\n  ...args_before,\n  agentId,\n  userId,\n  sessionId\n};\n\nconsole.log(\"args\", args_after);\nreturn [{arguments: args_after}];\n"
+      },
+      "id": "69804ad9-e2d4-42d7-b1de-44762ccb88e8",
+      "name": "Inject IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const args_before = JSON.parse($('[OpenAI] Function').first().json.choices[0].message.function_call.arguments);\n\nconst agentId = $('Config').first().json.conversation.agentId;\nconst userId = $('Config').first().json.conversation.userId;\nconst sessionId = $('Config').first().json.conversation.sessionId;\n\nconst args_after = {\n  ...args_before,\n  agentId,\n  userId,\n  sessionId\n};\n\nconsole.log(\"args\", args_after);\nreturn [{arguments: args_after}];\n"
+      },
+      "id": "107a3daf-bb3f-47a2-b352-b2975914d294",
+      "name": "Inject IDs3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -1460,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "//const messages = $('Function Resp (w/ History)').first().json.messages;\nconst messages = []\nconst functionCall = $('[OpenAI] Function').first().json.choices[0].message;\nconst functionName = functionCall.function_call.name;\nconst functionResponse = JSON.stringify($input.first().json);\n\nconsole.log(\"!\");\nconsole.log(\"history\", messages);\nmessages.push(functionCall);\nmessages.push({role: 'function', name: functionName, content: functionResponse});\n\n// Return result\nreturn {messages: messages};\n"
+      },
+      "id": "9a8970d2-2221-40f9-a331-f8844150a9bb",
+      "name": "Function Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const functionResponse = \"Enrollment completed, inform the customer that they'll be able to access their personalized catalog on the website and be offered a welcome discount on their first purchase.\"\n\nconst messages = $('Config').first().json.conversation.messages.slice();\nmessages.push({role: 'function', name: 'onboarding_complete_checker', content: functionResponse});\n\n// Return result\nreturn {messages: messages};\n"
+      },
+      "id": "a3bfa514-8a77-40f6-b503-7fc5c964987d",
+      "name": "Function Response1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -1220,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = { messages: $('[System Msg] Prime Directive Main').first().json.messages.slice() };\nconst personality = $('Config').first().json.persona.data.personality;\nconst name = $('Config').first().json.persona.data.name;\nconst profession = $('Config').first().json.persona.data.profession;\n\nconst directive = `The user has asked you a question about the app. \n- Do not greet the user, just answer the question.\n- Don't make up answers, it's okay to say you don't know.\n- Don't use emojis to number your list.\n- Double check your response before responding.\n- Do not reveal your enrollment process\n- Keep answers short\n\nBackground information:\n- The user has called in to Acme Anvils to enroll in the business program.\n\nFAQ:\n1. What is Acme Anvil Company?\nAcme Anvil Company is a leading manufacturer and distributor of high-quality anvils. With a rich history spanning over a century, we've been the trusted supplier for blacksmiths, metalworkers, and Looney Tunes characters alike!\n\n2. What types of anvils do you offer?\nWe offer a variety of anvils, including:\nStandard Blacksmith Anvils\nDouble Horn Anvils\nStake Anvils\nMiniature Anvils for jewelry-making\nCustom Anvils with personalized designs\n\n3. Are Acme Anvils suitable for beginners?\nAbsolutely! We offer a range of anvils suitable for both beginners and seasoned professionals. If you're new to the craft, we recommend starting with our Beginner's Anvil Kit, which includes a guidebook and essential tools.\n\n4. How do I care for and maintain my anvil?\nTo ensure longevity:\nKeep it free from rust by storing in a dry place.\nClean the face of the anvil after use to prevent debris buildup.\nOccasionally, apply a thin layer of oil to prevent oxidation.\n\n5. I saw an anvil drop from the sky in a cartoon. Is that what you supply?\nWhile our anvils have been popularly featured in many cartoons (most notably in the escapades of Wile E. Coyote and Road Runner), we must emphasize that dropping anvils from great heights is not a recommended use. Always prioritize safety!\n\n6. How much do your anvils weigh?\nOur anvils range from lightweight models at 10 pounds, ideal for jewelry-making, to heavy-duty models weighing over 500 pounds for professional blacksmithing.\n\n7. How do I place an order?\nVisit our website at www.acmeanvilco.com, select the anvil of your choice, and follow the checkout process. Alternatively, you can call our sales team at 1-800-ACME-ANV.\n\n8. What is your return policy?\nWe offer a 30-day return policy. If you're not satisfied with your anvil, you can return it in its original condition for a full refund. Please see our detailed return policy on our website.\n\n9. Do you offer international shipping?\nYes, we ship worldwide! Shipping fees and customs duties apply.\n\n10. How can I get in touch with customer service?\nYou can reach our friendly customer service team at support@acmeanvilco.com or call us at 1-800-ACME-SUP.\n\n11. Do you offer anvils for rent?\nCurrently, we only offer anvils for purchase. However, we're considering introducing a rental service in the near future.\n\n12. Are your anvils certified?\nAbsolutely! All Acme Anvils undergo rigorous quality control and are certified for durability and safety.\n\n13. Are there discounts for new customers?\nYes, after successful enrollemnt you will be sent an email with a discount code offering you 20% off your first purchase order`;\n\n\nconst systemMsg = {\"role\": \"system\", \"content\": directive};\n\nconsole.log(\"input\", input);\n\n// input.messages.unshift(systemMsg); // top\ninput.messages.splice(input.messages.length - 1, 0, systemMsg); // second last\n// input.messages.push(systemMsg); // last\n\nconsole.log(\"output\", input.messages);\nreturn input; // returns the updated array\n"
+      },
+      "id": "b4c51c4b-342f-4b15-9d1e-90dd87678fbf",
+      "name": "[System Msg] Prime Directive Q&A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -1460,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = { messages: $input.first().json.conversation.messages };\nconst primeDirective = $('Config').first().json.persona.data.prime_directive;\nconst personality = $('Config').first().json.persona.data.personality;\nconst name = $('Config').first().json.persona.data.name;\nconst profession = $('Config').first().json.persona.data.profession;\nconst backstory = $('Config').first().json.persona.data.backstory;\n\nconst systemMsg = {\n  \"role\": \"system\",\n   \"content\": `Act as the character described below and take on the description of the persona. Never break character during your interaction with the user.\n     Your name: ${name}\n     Your backstory: ${backstory}\n     Your profession: ${profession}\n     Your personality: ${personality}     \n     Your directive: ${primeDirective}`\n};\n\nconsole.log(\"input\", input);\ninput.messages.unshift(systemMsg); // inject system promopt at start\n\nconsole.log(\"output\", input.messages);\nreturn input; // returns the updated array\n"
+      },
+      "id": "3ae389fc-84b5-42d7-8f49-f68a4b58f620",
+      "name": "[System Msg] Prime Directive Main",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -4240,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "messages",
+              "type": "arrayValue",
+              "arrayValue": "={{ $('Merge Function Resp').item.json.messages }}"
+            },
+            {
+              "name": "functions",
+              "type": "arrayValue",
+              "arrayValue": "={{ $json.functions }}"
+            },
+            {
+              "name": "function_call",
+              "stringValue": "={{ $json.function_call }}"
+            }
+          ]
+        },
+        "include": "none",
+        "options": {}
+      },
+      "id": "f7b6b6a2-3214-4ade-bdef-8ff599f06f27",
+      "name": "Conversation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        -3400,
+        60
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const messages = $('Conversation').first().json.messages.slice();\nconst response = $input.first().json.choices[0].message;\n\nmessages.push(response);\nreturn {messages: messages};"
+      },
+      "id": "a8c4707a-bd25-49b0-ba6a-e7dc2a5ede77",
+      "name": "Function Resp (w/ History)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -2280,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const functions = [\n        {\n          \"name\": \"questions\",\n          \"description\": \"If the user asks a question about the company or its products, this function returns the answer. Should be triggered for ALL questions\",\n          \"parameters\": {\n              \"type\": \"object\",\n              \"properties\": {\n                  \"question\": {\n                      \"type\": \"string\",\n                      \"description\": \"The user's question about the company or its products.\"\n                  },\n            },\n            \"required\": [\n                \"question\",\n            ],\n          }\n        },\n        {\n            \"name\": \"update_profile\",\n            \"description\": \"Updates the user's profile record with provided details about their life. UNKNOWN is not a valid entry in any property.\",\n            \"parameters\": {\n                \"type\": \"object\",\n                \"properties\": {\n                    \"id\": {\n                        \"type\": \"string\",\n                        \"description\": \"The user's ID.\"\n                    },\n                    \"name\": {\n                        \"type\": \"string\",\n                        \"description\": \"The name of the user.\"\n                    },\n                    \"email\": {\n                        \"type\": \"string\",\n                        \"description\": \"The work email address of the user.\"\n                    },\n                    \"location\": {\n                        \"type\": \"string\",\n                        \"description\": \"The geographic location of the user.\"\n                    },\n                    \"title\": {\n                        \"type\": \"string\",\n                        \"description\": \"The title at their company.\"\n                    },\n                    \"company_name\": {\n                        \"type\": \"string\",\n                        \"description\": \"The name of the company they work for.\"\n                    },\n                    \"annual_budget\": {\n                        \"type\": \"number\",\n                        \"description\": \"Budget in USD for the next 12 months\"\n                    },\n                },\n                \"required\": [\n                    \"id\"\n                ]\n            }\n        },\n        {\n          \"name\": \"enrollment_complete\",\n          \"description\": \"Marks enrollment as complete when ONBOARDING IS COMPLETE is found in the system message.\",\n          \"parameters\": {\n              \"type\": \"object\",\n              \"properties\": {\n                  \"id\": {\n                      \"type\": \"string\",\n                      \"description\": \"The user's ID.\"\n                  },\n              },\n            \"required\": [\n                \"id\",\n            ],\n          }\n        }\n];\n\n// Function call\nlet function_call;\ntry {\n    // Try to get messages from stream2 if they exist\n    const stream2Output = $('IF').first().json;\n    function_call = \"none\"\n} catch (error) {\n    // Handle error (e.g., IF node not executed)\n  function_call = \"auto\"\n}\n\nreturn {functions, function_call}; "
+      },
+      "id": "243de3c1-3a8e-467c-8f38-b024b34a5b6c",
+      "name": "Function",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -3660,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"runIndex\": {{ $runIndex }},\n}",
+        "options": {}
+      },
+      "id": "74b93b52-4334-493f-a16e-845c1c829bb5",
+      "name": "Run Index",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        -4500,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $input.first().json.runIndex }}",
+              "operation": "smallerEqual"
+            }
+          ]
+        }
+      },
+      "id": "ed3a1426-8787-42ce-9541-e49760619ad7",
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -4240,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const messages = [];\nconst functionName = $('[OpenAI] Function').first().json.choices[0].message.function_call.name;\nconst functionResponse = { answer: $input.first().json.choices[0].message.content};\n\nreturn functionResponse;"
+      },
+      "id": "c7971e91-854a-4b1e-953b-8c2cdbb4730f",
+      "name": "Function Response2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log(\"Starting the script...\");\n\n// Initialize empty arrays for messages from each stream\nlet stream1Messages = [];\nlet stream2Messages = [];\n\n// Try to get messages from stream1 if they exist\nconst stream1Output = $('[System Msg] Prime Directive Main').first().json;\nconsole.log(\"Stream1 Output: \", stream1Output);\n\nif (stream1Output && stream1Output.hasOwnProperty('messages')) {\n    console.log(\"Found messages in Stream1\");\n    stream1Messages = stream1Output.messages;\n} else {\n    console.log(\"No messages found in Stream1 or Stream1 is not defined\");\n}\n\ntry {\n    // Try to get messages from stream2 if they exist\n    const stream2Output = $('IF').first().json;\n    console.log(\"Stream2 Output: \", stream2Output);\n\n    if (stream2Output && stream2Output.hasOwnProperty('messages')) {\n        console.log(\"Found messages in Stream2\");\n        stream2Messages = stream2Output.messages;\n    } else {\n        console.log(\"No messages found in Stream2 or Stream2 is not defined\");\n    }\n} catch (error) {\n    // Handle error (e.g., IF node not executed)\n    console.log(\"Error: IF node has not been executed or no data is available.\");\n}\n\n// Combine the messages only if stream2Messages exists and is not empty\nif (stream2Messages.length > 0) {\n    console.log(\"Combining messages from Stream1 and Stream2\");\n    stream1Messages = [...stream1Messages, ...stream2Messages];\n} else {\n    console.log(\"No messages to combine from Stream2, using Stream1 messages only\");\n}\n\nconsole.log(\"Final combined messages: \", stream1Messages);\n\nreturn { json: { messages: stream1Messages } };\n"
+      },
+      "id": "a317c140-9951-46ba-9f5c-11a33bea05b9",
+      "name": "Merge Function Resp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -3940,
+        60
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer your-key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messages",
+              "value": "={{ $input.first().json.messages }}"
+            },
+            {
+              "name": "model",
+              "value": "={{ $('Config').first().json.llm.data.model }}"
+            },
+            {
+              "name": "temperature",
+              "value": "={{ $('Config').first().json.llm.data.temperature }}"
+            },
+            {
+              "name": "frequency_penalty",
+              "value": "={{ $('Config').first().json.llm.data.frequencyPenalty }}"
+            },
+            {
+              "name": "max_tokens",
+              "value": "={{ $('Config').first().json.llm.data.maxTokens }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $('Config').first().json.conversation.userId }}"
+            },
+            {
+              "name": "functions",
+              "value": "={{ $('Conversation').first().json.functions }}"
+            },
+            {
+              "name": "presence_penalty",
+              "value": "={{ 1 }}"
+            },
+            {
+              "name": "function_call",
+              "value": "={{ $('Conversation').item.json[\"function_call\"] }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "759491bc-7fca-4dce-87ef-3a0967ddb9c9",
+      "name": "[OpenAI] Function",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2560,
+        60
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "752fc364-d5a5-4e22-9407-d35b7eddf3f7",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -4240,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const transformed = {\n  \"responseType\": \"text\",\n  \"text\": {\n    \"content\": \"I missed that, can you repeat that please?\"\n  },\n  \"usage\": {\n    \"chatCompletion\": [{\n      \"model\": \"error\",\n      \"isUserKey\": false,\n      \"promptTokens\": 0,\n      \"completionTokens\": 0,\n      \"totalTokens\": 0,  \n    }]\n  },\n};\n\nreturn transformed"
+      },
+      "id": "f4139997-9428-4d08-b0ec-25654401b40f",
+      "name": "Response: Text Message1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -3920,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "924da36c-687e-46bd-bf48-ec3b172b7dc6",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -3660,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer your-key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messages",
+              "value": "={{[$input.first().json] }}"
+            },
+            {
+              "name": "model",
+              "value": "gpt-4"
+            },
+            {
+              "name": "temperature",
+              "value": "={{ $('Config').first().json.llm.data.temperature }}"
+            },
+            {
+              "name": "frequency_penalty",
+              "value": "={{ $('Config').first().json.llm.data.frequencyPenalty }}"
+            },
+            {
+              "name": "max_tokens",
+              "value": "={{ $('Config').first().json.llm.data.maxTokens }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $('Config').first().json.conversation.userId }}"
+            },
+            {
+              "name": "presence_penalty",
+              "value": "={{ 1 }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "fe24082b-fcea-4a4f-957b-e0823411944d",
+      "name": "[OpenAI] Function Checker",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1220,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let messages = [];\nconst args = $('[OpenAI] Function').first().json.choices[0].message.function_call.arguments;\nconst systemMsg = {\n  \"role\": \"system\",\n  \"content\": `Act as a JSON validator. Validate the format of this JSON and correct it if necessary.\n  - Only output the valid JSON, do not output anything else. \n  - Check proper use of double quotes\n  - Remove all unnecessary spaces\n  - Remove all in-line comments\n  - Double check your answer before responding\n  \n  Validate the following JSON:\n   ${args}`\n};\n\nmessages.push(systemMsg);\n\nconsole.log(messages);\nreturn messages;\n"
+      },
+      "id": "ac0657b0-68d3-4590-8bb9-773117033b19",
+      "name": "Function JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -1460,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer your-key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messages",
+              "value": "={{ $input.first().json.messages }}"
+            },
+            {
+              "name": "model",
+              "value": "={{ $('Config').first().json.llm.data.model }}"
+            },
+            {
+              "name": "temperature",
+              "value": "={{ $('Config').first().json.llm.data.temperature }}"
+            },
+            {
+              "name": "frequency_penalty",
+              "value": "={{ $('Config').first().json.llm.data.frequencyPenalty }}"
+            },
+            {
+              "name": "max_tokens",
+              "value": "={{ $('Config').first().json.llm.data.maxTokens }}"
+            },
+            {
+              "name": "user",
+              "value": "={{ $('Config').first().json.conversation.userId }}"
+            },
+            {
+              "name": "presence_penalty",
+              "value": "={{ 2 }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "4c38318b-57e7-4769-b63d-d8d8c220a99e",
+      "name": "[OpenAI] Enrollment Complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -960,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').item.json[\"isProduction\"] === false ? \"http://127.0.0.1:5001/your-app/us-central1/completedOnboarding\" : \"https://your-app.cloudfunctions.net/completedOnboarding\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $('Config').item.json[\"conversation\"][\"userId\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fe93235a-d6fa-4232-92f5-74ad8d5c1aa0",
+      "name": "Enrollment complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        100,
+        -80
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FCI8QYaKJq8EO4lZ",
+          "name": "Ingress"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').item.json[\"isProduction\"] === false ? \"http://127.0.0.1:5001/your-app/us-central1/updateUserProfile\" : \"https://your-app.cloudfunctions.net/updateUserProfile\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $json[\"arguments\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "11951e4c-81a3-423f-8da9-743b550f82d6",
+      "name": "Update User Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -700,
+        540
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "FCI8QYaKJq8EO4lZ",
+          "name": "Ingress"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = {\n    messages: $('Conversation').first().json.messages.slice()\n}\n\nconst userProfile = $('[DJ] Get UserProfile').first().json.result.userProfile;\n\nlet content = `As an enrollment agent, your goal is to walk the user through each of these steps.\nStep 1: Continue to collect user profile data until all UNKNOWN fields are collected. Name, title, company, location, email, and annual budget are all mandatory.\nStep 2: Answer any questions the user has by calling the \"questions\" function\nStep 3: Mark enrollment complete once Step 1 is satisfied.\n\nThis is the list of data you've collected so far from the user:`;\n\ncontent += `\\nID: ${userProfile.id || 'UNKNOWN'}`;\ncontent += `\\nNAME: ${userProfile.displayName || 'UNKNOWN'}`;\ncontent += `\\nLOCATION: ${userProfile.location || 'UNKNOWN'}`;\ncontent += `\\nEMAIL: ${userProfile.email || 'UNKNOWN'}`;\ncontent += `\\nTITLE: ${userProfile.metadata?.title || 'UNKNOWN'}`;\ncontent += `\\nCOMPANY: ${userProfile.metadata?.company_name || 'UNKNOWN'}`;\ncontent += `\\nANNUAL BUDGET: ${userProfile.metadata?.annual_budget || 'UNKNOWN'}`;\n\nlet enrollmentComplete = userProfile.displayName && userProfile.location && userProfile.email && userProfile.metadata?.title && userProfile.metadata?.company_name && userProfile.metadata?.annual_budget;\n\nif (enrollmentComplete) {\n  content += \"\\n\\nENROLLMENT IS COMPLETE\";\n}\n\nlet systemMsg = {\n  \"role\": \"system\",\n  \"content\": `${content}`\n};\n\n// console.log(\"input\", input);\n// input.messages.push(systemMsg); // inject system promopt at start\ninput.messages.splice(1, 0, systemMsg); // second from top\n// input.messages.splice(input.messages.length - 1, 0, systemMsg); // second last\n// input.messages.push(systemMsg); // inject system promopt at end\n\n// console.log(\"output\", input.messages);\nreturn input; // returns the updated array"
+      },
+      "id": "842c3a0f-288c-4173-97d6-ce95b71709a9",
+      "name": "[System Msg] Enrollment Checklist",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -2840,
+        60
+      ]
+    }
+  ],
+  "connections": {
+    "Switch9000": {
+      "main": [
+        [
+          {
+            "node": "Switch90002",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Switch90001",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Switch90003",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Switch90004",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response: Text Message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch90001": {
+      "main": [
+        [
+          {
+            "node": "Response: Text Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch90002": {
+      "main": [
+        [
+          {
+            "node": "Function JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch90003": {
+      "main": [
+        [
+          {
+            "node": "Inject IDs3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ingress": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "[System Msg] Prime Directive Main",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[DJ] Get UserProfile": {
+      "main": [
+        [
+          {
+            "node": "[System Msg] Enrollment Checklist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook4": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Enrollment complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response: Text Message5": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch90004": {
+      "main": [
+        [
+          {
+            "node": "[System Msg] Prime Directive Q&A",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[OpenAI] FAQ": {
+      "main": [
+        [
+          {
+            "node": "Function Response2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inject IDs": {
+      "main": [
+        [
+          {
+            "node": "Update User Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inject IDs3": {
+      "main": [
+        [
+          {
+            "node": "Function Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Response": {
+      "main": [
+        [
+          {
+            "node": "Run Index",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Response1": {
+      "main": [
+        [
+          {
+            "node": "[OpenAI] Enrollment Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[System Msg] Prime Directive Q&A": {
+      "main": [
+        [
+          {
+            "node": "[OpenAI] FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[System Msg] Prime Directive Main": {
+      "main": [
+        [
+          {
+            "node": "Merge Function Resp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation": {
+      "main": [
+        [
+          {
+            "node": "[DJ] Get UserProfile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Resp (w/ History)": {
+      "main": [
+        [
+          {
+            "node": "Switch9000",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function": {
+      "main": [
+        [
+          {
+            "node": "Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Index": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "Merge Function Resp",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response: Text Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Response2": {
+      "main": [
+        [
+          {
+            "node": "Function Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Function Resp": {
+      "main": [
+        [
+          {
+            "node": "Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[OpenAI] Function": {
+      "main": [
+        [
+          {
+            "node": "Function Resp (w/ History)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Response: Text Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response: Text Message1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[OpenAI] Function Checker": {
+      "main": [
+        [
+          {
+            "node": "Inject IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function JSON": {
+      "main": [
+        [
+          {
+            "node": "[OpenAI] Function Checker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[OpenAI] Enrollment Complete": {
+      "main": [
+        [
+          {
+            "node": "Response: Text Message5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update User Profile": {
+      "main": [
+        [
+          {
+            "node": "Function Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "[System Msg] Enrollment Checklist": {
+      "main": [
+        [
+          {
+            "node": "[OpenAI] Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
